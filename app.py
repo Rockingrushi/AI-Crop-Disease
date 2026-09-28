@@ -1,95 +1,130 @@
 import os
 import json
 import numpy as np
-from tensorflow.keras.models import load_model
-from tensorflow.keras.preprocessing import image
 from flask import Flask, render_template, request, jsonify
 
-app = Flask(__name__)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.join(BASE_DIR, "plant_disease_model.h5")
+LABEL_PATH = os.path.join(BASE_DIR, "class_labels.json")
+TEMPLATE_DIR = os.path.join(BASE_DIR, "templates")
+STATIC_DIR = os.path.join(BASE_DIR, "static")
 
-MODEL_PATH = "plant_disease_model.h5"
-LABEL_PATH = "class_labels.json"
+app = Flask(
+    __name__,
+    template_folder=TEMPLATE_DIR,
+    static_folder=STATIC_DIR
+)
 
 # Global history list for last 3 detections
 detection_history = []
 
+# Global cached model and status
+_model = None
+_model_load_attempted = False
+_model_load_error = None
+
 # ----------------------------------------------------------
-# 🌱 Load model safely
+# Load labels
 # ----------------------------------------------------------
-def load_model_safely():
+CLASS_NAMES = []
+if os.path.exists(LABEL_PATH):
+    try:
+        with open(LABEL_PATH, "r", encoding="utf-8") as f:
+            CLASS_NAMES = json.load(f)
+    except Exception as e:
+        print(f"[WARN] Error loading class_labels.json: {e}")
+        CLASS_NAMES = ["Unknown"]
+else:
+    CLASS_NAMES = ["Unknown"]
+    print(f"[WARN] class_labels.json not found at {LABEL_PATH} -- using placeholder.")
+
+# ----------------------------------------------------------
+# Load model safely (Lazy-loaded for Serverless compatibility)
+# ----------------------------------------------------------
+def get_model():
     """
-    Load the model if it exists; otherwise, return None and print instructions.
+    Lazily loads and caches the TensorFlow Keras model.
+    Importing TensorFlow and loading the model on-demand prevents
+    module-import timeouts during serverless cold starts.
     """
+    global _model, _model_load_attempted, _model_load_error
+
+    if _model is not None:
+        return _model
+
+    if _model_load_attempted and _model_load_error is not None:
+        return None
+
+    _model_load_attempted = True
+
     if not os.path.exists(MODEL_PATH):
-        print("⚠️ Model not found at", MODEL_PATH)
-        print("Please train the model using plant_disease_training.ipynb (in Colab) and download plant_disease_model.h5 and class_labels.json from your Google Drive to this directory.")
+        _model_load_error = f"Model file not found at {MODEL_PATH}"
+        print(f"[WARN] {_model_load_error}")
         return None
 
     try:
-        model = load_model(MODEL_PATH)
-        print("✅ Model loaded successfully.")
-        return model
+        print(f"[INFO] Attempting to load model from {MODEL_PATH}...")
+        from tensorflow.keras.models import load_model
+        _model = load_model(MODEL_PATH)
+        print("[SUCCESS] Model loaded successfully.")
+        return _model
     except Exception as e:
-        print("❌ Model load error:", e)
+        _model_load_error = str(e)
+        print(f"[ERROR] Model load error: {e}")
         return None
 
-# ----------------------------------------------------------
-# 🌿 Load model & labels
-# ----------------------------------------------------------
-model = load_model_safely()
-
-if os.path.exists(LABEL_PATH):
-    with open(LABEL_PATH, "r") as f:
-        CLASS_NAMES = json.load(f)
-else:
-    CLASS_NAMES = ["Unknown"]
-    print("⚠️ class_labels.json not found — using placeholder.")
+# For backward compatibility with existing code/tests
+def load_model_safely():
+    return get_model()
 
 # ----------------------------------------------------------
-# 🌼 Home Route
+# Home Route
 # ----------------------------------------------------------
 @app.route("/")
 def index():
-    model_loaded = model is not None
-    return render_template("index.html", model_loaded=model_loaded)
+    model_available = os.path.exists(MODEL_PATH)
+    return render_template("index.html", model_loaded=model_available)
 
 # ----------------------------------------------------------
-# 🔍 Predict Route
+# Predict Route
 # ----------------------------------------------------------
 @app.route("/predict", methods=["POST"])
 def predict():
-    if model is None:
-        return jsonify({"error": "Model not available. Please restart the server."})
-
     if "file" not in request.files:
-        return jsonify({"error": "No file uploaded."})
+        return jsonify({"error": "No file uploaded."}), 400
 
     file = request.files["file"]
     if file.filename == "":
-        return jsonify({"error": "No file selected."})
+        return jsonify({"error": "No file selected."}), 400
+
+    model = get_model()
+    if model is None:
+        err_msg = _model_load_error or "Model is not available. Please verify model dependencies and file."
+        return jsonify({"error": f"Model unavailable: {err_msg}"}), 503
 
     try:
-        img_path = os.path.join("static", file.filename or "uploaded_image.jpg")
-        file.save(img_path)
+        from PIL import Image
 
-        img = image.load_img(img_path, target_size=(224, 224))
-        x = image.img_to_array(img)
-        x = np.expand_dims(x, axis=0) / 255.0
+        # In-memory image processing (production-safe: no local disk write to read-only filesystems)
+        img = Image.open(file.stream).convert("RGB")
+        img = img.resize((224, 224))
+        x = np.array(img, dtype=np.float32) / 255.0
+        x = np.expand_dims(x, axis=0)
 
         preds = model.predict(x)
         pred_class = CLASS_NAMES[np.argmax(preds)] if CLASS_NAMES else "Unknown"
 
         # Add to history
-        detection_history.append({"disease": pred_class, "image": "/" + img_path})
+        detection_history.append({"disease": pred_class, "image": file.filename or "upload.jpg"})
         if len(detection_history) > 3:
             detection_history.pop(0)
 
         return jsonify({"disease": pred_class, "history": detection_history})
     except Exception as e:
-        return jsonify({"error": str(e)})
+        return jsonify({"error": str(e)}), 500
 
 # ----------------------------------------------------------
-# 🚀 Run Flask app
+# Run Flask app
 # ----------------------------------------------------------
 if __name__ == "__main__":
     app.run(debug=True)
