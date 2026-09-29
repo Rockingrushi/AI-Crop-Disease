@@ -113,14 +113,41 @@ def predict():
 
         from disease_info import get_disease_info
 
-        preds = model.predict(x)
-        pred_class = CLASS_NAMES[np.argmax(preds)] if CLASS_NAMES else "Unknown"
+        raw_preds = model.predict(x)[0]
+        top_indices = np.argsort(raw_preds)[::-1][:3]
+        top_idx = int(top_indices[0])
+        confidence = round(float(raw_preds[top_idx]) * 100, 1)
+
+        pred_class = CLASS_NAMES[top_idx] if CLASS_NAMES else "Unknown"
         disease_info = get_disease_info(pred_class)
+
+        # Build top-3 candidates list for transparency
+        top_predictions = []
+        for idx in top_indices:
+            cls_name = CLASS_NAMES[int(idx)]
+            info = get_disease_info(cls_name)
+            top_predictions.append({
+                "disease": cls_name,
+                "display_name": info.get("display_name", cls_name),
+                "confidence": round(float(raw_preds[int(idx)]) * 100, 1),
+                "status": info.get("status", "Unknown")
+            })
+
+        # Check for low confidence / uncertain diagnosis
+        is_low_confidence = bool(confidence < 60.0)
+        diagnosis_note = None
+        if is_low_confidence:
+            diagnosis_note = (
+                f"Confidence is low ({confidence}%). If this leaf is actually neat and healthy, "
+                "note that water droplets, shiny reflections, or non-target plant varieties often "
+                "trigger false disease detections. For best accuracy, use dry leaves on a plain background."
+            )
 
         # Add to history
         detection_history.append({
             "disease": pred_class,
             "display_name": disease_info.get("display_name", pred_class),
+            "confidence": confidence,
             "status": disease_info.get("status", "Unknown"),
             "image": file.filename or "upload.jpg"
         })
@@ -131,6 +158,10 @@ def predict():
             "disease": pred_class,
             "display_name": disease_info.get("display_name", pred_class),
             "status": disease_info.get("status", "Unknown"),
+            "confidence": confidence,
+            "is_low_confidence": is_low_confidence,
+            "diagnosis_note": diagnosis_note,
+            "top_predictions": top_predictions,
             "precautions": disease_info.get("precautions", []),
             "medicines_pesticides": disease_info.get("medicines_pesticides", []),
             "cure_steps": disease_info.get("cure_steps", ""),

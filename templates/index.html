@@ -31,7 +31,7 @@
       padding: 30px;
       text-align: center;
       width: 100%;
-      max-width: 580px;
+      max-width: 600px;
       transition: all 0.3s ease;
       position: relative;
       margin: auto 0;
@@ -52,7 +52,32 @@
       color: #4b6b50;
       font-size: 0.95rem;
       margin-top: -12px;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
+    }
+
+    /* Crop notice badge */
+    .crops-banner {
+      background: #f1f8e9;
+      border: 1px solid #c5e1a5;
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 0.85rem;
+      color: #33691e;
+      margin-bottom: 18px;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .crops-banner summary {
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .crops-banner p {
+      margin: 6px 0 0 0;
+      line-height: 1.4;
+      font-size: 0.82rem;
+      color: #558b2f;
     }
 
     /* ---------- Inputs & Buttons ---------- */
@@ -148,7 +173,7 @@
       background: #ffffff;
       border: 1px solid #dcedc8;
       border-radius: 16px;
-      padding: 20px;
+      padding: 22px;
       box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
       animation: fadeIn 0.4s ease-out;
     }
@@ -166,21 +191,28 @@
       gap: 10px;
       border-bottom: 2px solid #e8f5e9;
       padding-bottom: 12px;
-      margin-bottom: 15px;
+      margin-bottom: 14px;
     }
 
     .result-title {
-      font-size: 1.3rem;
+      font-size: 1.35rem;
       font-weight: 700;
       color: #1b5e20;
       margin: 0;
+    }
+
+    .badges-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
     }
 
     .status-badge {
       display: inline-block;
       padding: 5px 12px;
       border-radius: 20px;
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.5px;
@@ -202,6 +234,115 @@
       background-color: #fff8e1;
       color: #f57f17;
       border: 1px solid #ffe082;
+    }
+
+    .confidence-badge {
+      display: inline-block;
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      background: #e0f2f1;
+      color: #00695c;
+      border: 1px solid #80cbc4;
+    }
+
+    .confidence-badge.low {
+      background: #fff3e0;
+      color: #e65100;
+      border-color: #ffb74d;
+    }
+
+    /* Warning Notice for Water Droplets / Clean leaves */
+    .warning-box {
+      background: #fff8e1;
+      border: 1px solid #ffe082;
+      border-left: 4px solid #ffb300;
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-top: 14px;
+      color: #5d4037;
+      font-size: 0.88rem;
+      line-height: 1.5;
+    }
+
+    .warning-box strong {
+      color: #e65100;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+
+    .btn-clean-leaf {
+      background: #e8f5e9;
+      color: #2e7d32;
+      border: 1px solid #81c784;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+      display: inline-block;
+    }
+
+    .btn-clean-leaf:hover {
+      background: #c8e6c9;
+    }
+
+    /* Top 3 Breakdown */
+    .top-candidates {
+      margin-top: 14px;
+      background: #fafafa;
+      border: 1px solid #eee;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 0.86rem;
+    }
+
+    .candidates-title {
+      font-weight: 600;
+      color: #555;
+      margin-bottom: 8px;
+    }
+
+    .candidate-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .candidate-name {
+      color: #333;
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-right: 10px;
+    }
+
+    .candidate-bar-wrapper {
+      width: 90px;
+      background: #e0e0e0;
+      height: 8px;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-right: 8px;
+    }
+
+    .candidate-bar {
+      height: 100%;
+      background: #4caf50;
+      border-radius: 4px;
+    }
+
+    .candidate-pct {
+      font-weight: 600;
+      color: #444;
+      width: 42px;
+      text-align: right;
     }
 
     /* Section Boxes */
@@ -369,6 +510,14 @@
     <h2>🌿 AI Plant Disease Detector</h2>
     <div class="subtitle">Instant Diagnosis, Precautions & Pesticide Cure Guide</div>
 
+    <details class="crops-banner">
+      <summary>ℹ️ 14 Supported Crops & Scanning Tips</summary>
+      <p>
+        <strong>Trained Crops:</strong> Apple, Blueberry, Cherry, Corn (Maize), Grape, Orange (Citrus), Peach, Bell Pepper, Potato, Raspberry, Soybean, Squash, Strawberry, Tomato.<br><br>
+        <strong>⚠️ Note for Clean Leaves:</strong> Shiny water droplets, glare, and ornamental houseplants can cause false positives (e.g. droplets looking like fungal rust spots). Photograph a dry leaf in clear, natural lighting for highest accuracy!
+      </p>
+    </details>
+
     <div class="input-wrapper">
       <input type="file" id="fileInput" accept="image/*" />
     </div>
@@ -485,6 +634,30 @@
       return "status-infected";
     }
 
+    // Render healthy view if user clicks "My Leaf is Healthy"
+    window.renderHealthyView = function() {
+      resultDiv.innerHTML = `
+        <div class="result-card">
+          <div class="result-header">
+            <h3 class="result-title">Plant - Clean & Healthy Leaf</h3>
+            <span class="status-badge status-healthy">Healthy 🌱</span>
+          </div>
+          <div class="info-section section-cure">
+            <div class="section-title">🌿 Healthy Plant Maintenance</div>
+            <p class="cure-text">Your plant foliage is clean, vibrant, and disease-free! Keep soil evenly moist, provide balanced nitrogen-phosphorus-potassium nutrition, and maintain adequate spacing for air movement.</p>
+          </div>
+          <div class="info-section section-precautions">
+            <div class="section-title">🛡️ Preventive Care Tips</div>
+            <ul class="info-list">
+              <li>Always water directly at the soil base or drip line to keep leaves dry.</li>
+              <li>Avoid leaving leaves wet with water droplets under direct hot sun or overnight.</li>
+              <li>Scout the undersides of leaves weekly for early signs of pests or aphids.</li>
+            </ul>
+          </div>
+        </div>
+      `;
+    };
+
     // Detect Disease
     detectBtn.addEventListener("click", async () => {
       const formData = new FormData();
@@ -518,17 +691,56 @@
         const displayName = data.display_name || data.disease || "Unknown Disease";
         const status = data.status || "Infected";
         const statusClass = getStatusClass(status);
+        const confidence = data.confidence || 0;
+        const isLow = data.is_low_confidence || (confidence < 60);
         const precautions = data.precautions || [];
         const medicines = data.medicines_pesticides || [];
         const cureSteps = data.cure_steps || "";
+        const topCandidates = data.top_predictions || [];
 
         let html = `
           <div class="result-card">
             <div class="result-header">
               <h3 class="result-title">${displayName}</h3>
-              <span class="status-badge ${statusClass}">${status}</span>
+              <div class="badges-row">
+                <span class="status-badge ${statusClass}">${status}</span>
+                <span class="confidence-badge ${isLow ? 'low' : ''}">
+                  ${isLow ? '⚠️' : '🎯'} ${confidence}%
+                </span>
+              </div>
             </div>
         `;
+
+        // Water droplet / clean leaf warning if confidence is low or infected
+        if (isLow) {
+          html += `
+            <div class="warning-box">
+              <strong>💧 Is your leaf actually neat and clean?</strong>
+              <p style="margin:4px 0 0 0;">
+                The AI detected low certainty (${confidence}%). <strong>Shiny water droplets, gloss, and lighting reflections</strong> on leaves can easily confuse neural networks and trigger false disease detections (like Cedar Apple Rust).
+              </p>
+              <button class="btn-clean-leaf" onclick="renderHealthyView()">🌱 My Leaf is Actually Healthy</button>
+            </div>
+          `;
+        }
+
+        // Top 3 predictions breakdown
+        if (topCandidates.length > 1) {
+          html += `
+            <div class="top-candidates">
+              <div class="candidates-title">📊 Top AI Confidence Breakdown:</div>
+              ${topCandidates.map(c => `
+                <div class="candidate-row">
+                  <span class="candidate-name" title="${c.display_name}">${c.display_name}</span>
+                  <div class="candidate-bar-wrapper">
+                    <div class="candidate-bar" style="width: ${Math.min(100, c.confidence)}%; background: ${c.status.toLowerCase().includes('healthy') ? '#4caf50' : '#ef5350'}"></div>
+                  </div>
+                  <span class="candidate-pct">${c.confidence}%</span>
+                </div>
+              `).join("")}
+            </div>
+          `;
+        }
 
         if (cureSteps) {
           html += `
