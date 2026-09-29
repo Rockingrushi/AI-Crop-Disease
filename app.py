@@ -111,15 +111,31 @@ def predict():
         x = np.array(img, dtype=np.float32) / 255.0
         x = np.expand_dims(x, axis=0)
 
+        from disease_info import get_disease_info
+
         preds = model.predict(x)
         pred_class = CLASS_NAMES[np.argmax(preds)] if CLASS_NAMES else "Unknown"
+        disease_info = get_disease_info(pred_class)
 
         # Add to history
-        detection_history.append({"disease": pred_class, "image": file.filename or "upload.jpg"})
+        detection_history.append({
+            "disease": pred_class,
+            "display_name": disease_info.get("display_name", pred_class),
+            "status": disease_info.get("status", "Unknown"),
+            "image": file.filename or "upload.jpg"
+        })
         if len(detection_history) > 3:
             detection_history.pop(0)
 
-        return jsonify({"disease": pred_class, "history": detection_history})
+        return jsonify({
+            "disease": pred_class,
+            "display_name": disease_info.get("display_name", pred_class),
+            "status": disease_info.get("status", "Unknown"),
+            "precautions": disease_info.get("precautions", []),
+            "medicines_pesticides": disease_info.get("medicines_pesticides", []),
+            "cure_steps": disease_info.get("cure_steps", ""),
+            "history": detection_history
+        })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
